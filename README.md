@@ -20,7 +20,7 @@ A modern chat application built with React, Node.js and Socket.IO enabling real-
 ### Running Using Docker
 ```bash
 # Clone and run with Docker
-git clone https://github.com/username/chat-app
+git clone https://github.com/prajguru54/chat-app
 cd chat-app
 docker-compose up --build
 
@@ -31,7 +31,7 @@ Backend: http://localhost:3000
 ```
 ### Running without Docker
 ```bash
-git clone https://github.com/username/chat-app
+git clone https://github.com/prajguru54/chat-app
 cd chat-app
 cd server
 npm install
