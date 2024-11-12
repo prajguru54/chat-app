@@ -58,17 +58,17 @@ io.on('connection', (socket) => {
   });
 
   socket.on('typing', ({ userId }) => {
-    console.log('⌨️ Typing event from:', userId);
+    // console.log('⌨️ Typing event from:', userId);
     const receiverId = [...users.keys()].find(id => id !== userId);
     if (receiverId) {
       const receiverSocketId = users.get(receiverId);
-      console.log(`Sending typing indicator to: ${receiverId} (${receiverSocketId})`);
+      // console.log(`Sending typing indicator to: ${receiverId} (${receiverSocketId})`);
       io.to(receiverSocketId).emit('typing', { userId });
     }
   });
 
   socket.on('stopTyping', ({ userId }) => {
-    console.log('⌨️ Stop typing event from:', userId);
+    // console.log('⌨️ Stop typing event from:', userId);
     const receiverId = [...users.keys()].find(id => id !== userId);
     if (receiverId) {
       const receiverSocketId = users.get(receiverId);
