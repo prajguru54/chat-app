@@ -17,5 +17,5 @@ COPY . .
 # Expose port 5173
 EXPOSE 5173
 
-# Start the Vite development server
-CMD ["npm", "run", "dev"]
+# Update command to bind to all interfaces
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

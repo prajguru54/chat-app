@@ -17,5 +17,5 @@ COPY . .
 # Expose port 3000
 EXPOSE 3000
 
-# Start the server
-CMD ["npm", "start"]
+# Update command to bind to all interfaces
+CMD ["node", "server.js", "--host", "0.0.0.0"]
