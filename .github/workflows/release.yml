@@ -1,4 +1,4 @@
-name: Production Release
+name: Release
 
 on:
   push:
@@ -16,17 +16,25 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      
-      - name: Get version from branch name
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
-
+          
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          release_branches: release/*
+          custom_release_rules: |
+            Feature:minor
+            Fix:patch
+            Breaking:major
+          
       - name: Generate changelog
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ env.VERSION }}
+          version: ${{ steps.tag_version.outputs.new_version }}
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
