@@ -18,7 +18,7 @@ jobs:
       - name: Validate version exists
         run: |
           VERSION=${{ github.event.inputs.version }}
-          if ! curl --fail -s https://hub.docker.com/v2/repositories/prajguru54/chat-client/tags/${VERSION#v}/ > /dev/null; then
+          if ! curl --fail -s https://hub.docker.com/v2/repositories/prajguru54/chat-client/tags/${VERSION}/ > /dev/null; then
             echo "Version ${VERSION} not found in Docker registry"
             exit 1
           fi
