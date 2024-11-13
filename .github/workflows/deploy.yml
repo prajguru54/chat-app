@@ -36,6 +36,7 @@ jobs:
       - name: Deploy specific version
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
+            mkdir -p /opt/chat-app && \
             cd /opt/chat-app && \
             export VERSION=${{ github.event.inputs.version }} && \
             docker-compose -f docker-compose.prod.yml pull && \
