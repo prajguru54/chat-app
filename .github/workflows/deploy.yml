@@ -31,10 +31,11 @@ jobs:
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H ${{ secrets.PROD_SERVER }} >> ~/.ssh/known_hosts
+          cat ~/.ssh/known_hosts
 
       - name: Deploy specific version
         run: |
-          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
+          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
             cd /opt/chat-app && \
             export VERSION=${{ github.event.inputs.version }} && \
             docker-compose -f docker-compose.prod.yml pull && \
