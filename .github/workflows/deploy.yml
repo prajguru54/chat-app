@@ -1,0 +1,54 @@
+name: Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.1)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: 'staging'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate version exists
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          if ! curl --fail -s https://hub.docker.com/v2/repositories/prajguru54/chat-client/tags/${VERSION#v} > /dev/null; then
+            echo "Version ${VERSION} not found in Docker registry"
+            exit 1
+          fi
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Deploy specific version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
+            cd /opt/chat-app && \
+            export VERSION=${{ github.event.inputs.version }} && \
+            docker-compose -f docker-compose.prod.yml pull && \
+            docker-compose -f docker-compose.prod.yml up -d
+          "
+
+      - name: Health check
+        run: |
+          sleep 10
+          curl --fail http://${{ secrets.PROD_SERVER }}:5173
+          curl --fail http://${{ secrets.PROD_SERVER }}:3000/health
