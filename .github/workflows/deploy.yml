@@ -52,9 +52,9 @@ jobs:
                     sudo usermod -aG docker ubuntu && \
 
                     # Create and setup directory
-                    sudo mkdir -p /opt/chat-app && \
-                    sudo chown -R ubuntu:ubuntu /opt/chat-app && \
-                    cd /opt/chat-app && \
+                    sudo mkdir -p /home/ubuntu/chat-app && \
+                    sudo chown -R ubuntu:ubuntu /home/ubuntu/chat-app && \
+                    cd /home/ubuntu/chat-app && \
                     export VERSION=${{ github.event.inputs.version }} && \
                     docker compose -f docker-compose.prod.yml pull && \
                     docker compose -f docker-compose.prod.yml up -d
