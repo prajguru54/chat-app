@@ -1,51 +1,67 @@
 name: Deploy to Production
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to deploy (e.g., v1.0.1)'
-        required: true
-        type: string
+    workflow_dispatch:
+        inputs:
+            version:
+                description: "Version to deploy (e.g., v1.0.4)"
+                required: true
+                type: string
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Validate version exists
-        run: |
-          VERSION=${{ github.event.inputs.version }}
-          if ! curl --fail -s https://hub.docker.com/v2/repositories/prajguru54/chat-client/tags/${VERSION}/ > /dev/null; then
-            echo "Version ${VERSION} not found in Docker registry"
-            exit 1
-          fi
-      
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+    deploy:
+        runs-on: ubuntu-latest
 
-      - name: Add server to known_hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.PROD_SERVER }} >> ~/.ssh/known_hosts
-          cat ~/.ssh/known_hosts
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Deploy specific version
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
-            sudo mkdir -p /opt/chat-app && \
-            sudo chown -R ubuntu:ubuntu /opt/chat-app && \
-            cd /opt/chat-app && \
-            export VERSION=${{ github.event.inputs.version }} && \
-            docker-compose -f docker-compose.prod.yml pull && \
-            docker-compose -f docker-compose.prod.yml up -d
-          "
+            - name: Validate version exists
+              run: |
+                  VERSION=${{ github.event.inputs.version }}
+                  if ! curl --fail -s https://hub.docker.com/v2/repositories/prajguru54/chat-client/tags/${VERSION}/ > /dev/null; then
+                    echo "Version ${VERSION} not found in Docker registry"
+                    exit 1
+                  fi
 
-      - name: Health check
-        run: |
-          sleep 10
-          curl --fail http://${{ secrets.PROD_SERVER }}:5173
-          curl --fail http://${{ secrets.PROD_SERVER }}:3000/health
+            - name: Set up SSH
+              uses: webfactory/ssh-agent@v0.8.0
+              with:
+                  ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+            - name: Add server to known_hosts
+              run: |
+                  ssh-keyscan -H ${{ secrets.PROD_SERVER }} >> ~/.ssh/known_hosts
+                  cat ~/.ssh/known_hosts
+
+            - name: Deploy specific version
+              run: |
+                  ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
+                    # Install Docker if not present
+                    if ! command -v docker &> /dev/null; then
+                      sudo apt-get update && \
+                      sudo apt-get install -y ca-certificates curl gnupg && \
+                      sudo install -m 0755 -d /etc/apt/keyrings && \
+                      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+                      sudo chmod a+r /etc/apt/keyrings/docker.gpg && \
+                      echo \"deb [arch=\$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo \$VERSION_CODENAME) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+                      sudo apt-get update && \
+                      sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+                    fi && \
+
+                    # Add user to docker group
+                    sudo usermod -aG docker ubuntu && \
+
+                    # Create and setup directory
+                    sudo mkdir -p /opt/chat-app && \
+                    sudo chown -R ubuntu:ubuntu /opt/chat-app && \
+                    cd /opt/chat-app && \
+                    export VERSION=${{ github.event.inputs.version }} && \
+                    docker compose -f docker-compose.prod.yml pull && \
+                    docker compose -f docker-compose.prod.yml up -d
+                  "
+
+            - name: Health check
+              run: |
+                  sleep 10
+                  curl --fail http://${{ secrets.PROD_SERVER }}:5173
+                  curl --fail http://${{ secrets.PROD_SERVER }}:3000/health
