@@ -1,4 +1,4 @@
-name: Production Deploy
+name: Deploy to Production
 
 on:
   workflow_dispatch:
@@ -7,19 +7,10 @@ on:
         description: 'Version to deploy (e.g., v1.0.1)'
         required: true
         type: string
-      environment:
-        description: 'Target environment'
-        required: true
-        type: choice
-        options:
-          - staging
-          - production
-        default: 'staging'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
     
     steps:
       - uses: actions/checkout@v3
@@ -39,7 +30,6 @@ jobs:
 
       - name: Deploy specific version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
             cd /opt/chat-app && \
             export VERSION=${{ github.event.inputs.version }} && \
