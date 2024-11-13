@@ -33,6 +33,10 @@ jobs:
                   ssh-keyscan -H ${{ secrets.PROD_SERVER }} >> ~/.ssh/known_hosts
                   cat ~/.ssh/known_hosts
 
+            - name: Copy docker-compose file
+              run: |
+                  scp -o StrictHostKeyChecking=no docker-compose.prod.yml ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }}:/home/${{ secrets.PROD_USER }}/chat-app/
+
             - name: Deploy specific version
               run: |
                   ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_USER }}@${{ secrets.PROD_SERVER }} "
@@ -49,12 +53,12 @@ jobs:
                     fi && \
 
                     # Add user to docker group
-                    sudo usermod -aG docker ubuntu && \
+                    sudo usermod -aG docker ${{ secrets.PROD_USER }} && \
 
                     # Create and setup directory
-                    sudo mkdir -p /home/ubuntu/chat-app && \
-                    sudo chown -R ubuntu:ubuntu /home/ubuntu/chat-app && \
-                    cd /home/ubuntu/chat-app && \
+                    sudo mkdir -p /home/${{ secrets.PROD_USER }}/chat-app && \
+                    sudo chown -R ${{ secrets.PROD_USER }}:${{ secrets.PROD_USER }} /home/${{ secrets.PROD_USER }}/chat-app && \
+                    cd /home/${{ secrets.PROD_USER }}/chat-app && \
                     export VERSION=${{ github.event.inputs.version }} && \
                     docker compose -f docker-compose.prod.yml pull && \
                     docker compose -f docker-compose.prod.yml up -d
